@@ -1,0 +1,4 @@
+#This file maps sender names from the mailItem to display names.
+#Each one should be on a separate line in the form:sender name:display name
+Neeson, Liam:Liam
+Reynolds, Ryan:Ryan Reynolds
