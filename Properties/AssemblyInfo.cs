@@ -8,9 +8,9 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("ocli")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Capita")]
+[assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("ocli")]
-[assembly: AssemblyCopyright("Copyright © Capita 2016")]
+[assembly: AssemblyCopyright("Copyright © Xanthalas 2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
