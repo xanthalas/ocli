@@ -83,32 +83,69 @@ namespace ocli
                 options.ShowAll = true;
             }
 
-            var unreadItems = from i in inboxFolder.Items where (i is Outlook.MailItem) && ((Outlook.MailItem)i).UnRead orderby ((Outlook.MailItem)i).ReceivedTime descending select i;
-            var allItems = from i in inboxFolder.Items where (i is Outlook.MailItem) orderby ((Outlook.MailItem)i).ReceivedTime descending select i;
+            var unreadMailItems = from i in inboxFolder.Items
+                                  where ((i is Outlook.MailItem) && ((Outlook.MailItem)i).UnRead)
+                                  select new InboxItem(MailType.Mail,
+                                                        ((Outlook.MailItem)i).ConversationID, 
+                                                        ((Outlook.MailItem)i).ConversationIndex, 
+                                                        ((Outlook.MailItem)i).SenderName, 
+                                                        ((Outlook.MailItem)i).Subject,
+                                                        ((Outlook.MailItem)i).ReceivedTime);
 
-            var selectedQuery = unreadItems;
+            var unreadMeetingItems = from i in inboxFolder.Items where ((i is Outlook.MeetingItem) && ((Outlook.MeetingItem)i).UnRead)
+                              select new InboxItem(MailType.Meeting,
+                                                    ((Outlook.MeetingItem)i).ConversationID, 
+                                                    ((Outlook.MeetingItem)i).ConversationIndex, 
+                                                    ((Outlook.MeetingItem)i).SenderName, 
+                                                    ((Outlook.MeetingItem)i).Subject,
+                                                    ((Outlook.MeetingItem)i).ReceivedTime);
+
+
+            var allMailItems = from i in inboxFolder.Items where (i is Outlook.MailItem)
+                               select new InboxItem(MailType.Mail,
+                                                    ((Outlook.MailItem)i).ConversationID,
+                                                    ((Outlook.MailItem)i).ConversationIndex,
+                                                    ((Outlook.MailItem)i).SenderName,
+                                                    ((Outlook.MailItem)i).Subject,
+                                                    ((Outlook.MailItem)i).ReceivedTime);
+
+            var allMeetingItems = from i in inboxFolder.Items where (i is Outlook.MeetingItem)
+                                  select new InboxItem(MailType.Meeting,
+                                                        ((Outlook.MeetingItem)i).ConversationID,
+                                                        ((Outlook.MeetingItem)i).ConversationIndex,
+                                                        ((Outlook.MeetingItem)i).SenderName,
+                                                        ((Outlook.MeetingItem)i).Subject,
+                                                        ((Outlook.MeetingItem)i).ReceivedTime);
+
+
+            var selectedMailQuery = unreadMailItems;
+            var selectedMeetingQuery = unreadMeetingItems;
 
             if (options.ShowAll)
             {
-                selectedQuery = allItems;
+                selectedMailQuery = allMailItems;
+                selectedMeetingQuery = allMeetingItems;
             }
+
+            var results = selectedMailQuery.ToList().Union(selectedMeetingQuery.ToList());
+
+            var sortedResults = from m in results orderby m.Received descending select m;
 
             int index = 0;
 
             List<LineData> lines = new List<ocli.LineData>();
 
-            foreach (var item in selectedQuery)
+            foreach (var item in sortedResults)
             {
                 // not every item in the inbox is a mail item
-                Outlook.MailItem mailItem = item as Outlook.MailItem;
                 index++;
 
-                var senderName = mailItem.SenderName.Replace(" (CCS)", "").Replace(" (BEU)", "").Trim();
+                var senderName = item.Sender.Replace(" (CCS)", "").Replace(" (BEU)", "").Trim();
                 senderName = (senderName.Length > 20 ? senderName.Substring(0, 20) : senderName);
                 senderName = (aliases.NameAlias.ContainsKey(senderName) ? aliases.NameAlias[senderName] : senderName);
 
                 var today = new DateTime(DateTime.Today.Year, DateTime.Today.Month, DateTime.Today.Day);
-                var emailDate = new DateTime(mailItem.ReceivedTime.Year, mailItem.ReceivedTime.Month, mailItem.ReceivedTime.Day);
+                var emailDate = new DateTime(item.Received.Year, item.Received.Month, item.Received.Day);
 
                 var age = (today - emailDate).Days;
                 string ageString = "";
@@ -124,8 +161,8 @@ namespace ocli
 
                 if (!options.Today || (options.Today && ageString== "[tdy]"))
                 {
-                    lines.Add(new LineData(index.ToString().PadLeft(3, ' '), ageString, senderName, mailItem.Subject));
-                    listedEmails.Add(new ocli.MailIdentifier(index, mailItem.ConversationID, mailItem.ConversationIndex));
+                    lines.Add(new LineData(index.ToString().PadLeft(3, ' '), ageString, senderName, item.Subject));
+                    listedEmails.Add(new ocli.MailIdentifier(index, item.ConversationId, item.ConversationIndex));
                 }
             }
 
@@ -167,12 +204,26 @@ namespace ocli
 
             var inboxFolder = getInbox();
 
+            //See if it is a mail item
             var requiredEmail = (from i in inboxFolder.Items where (i is Outlook.MailItem) 
                                 && ((Outlook.MailItem)i).ConversationID == selectedEmail.ConversationId
                                 && ((Outlook.MailItem)i).ConversationIndex == selectedEmail.ConversationIndex
                                 select i).FirstOrDefault();
 
-            if (requiredEmail != null)
+            //If we didn't find an email then try a meeting request
+            if (requiredEmail == null)
+            {
+                requiredEmail = (from i in inboxFolder.Items where (i is Outlook.MeetingItem)
+                                        && ((Outlook.MeetingItem)i).ConversationID == selectedEmail.ConversationId
+                                        && ((Outlook.MeetingItem)i).ConversationIndex == selectedEmail.ConversationIndex
+                                     select i).FirstOrDefault();
+
+                if (requiredEmail != null)
+                {
+                    ((Outlook.MeetingItem)requiredEmail).Display();
+                }
+            }
+            else
             {
                 ((Outlook.MailItem)requiredEmail).Display();
             }

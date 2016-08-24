@@ -68,6 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Aliases.cs" />
+    <Compile Include="InboxItem.cs" />
     <Compile Include="LineData.cs" />
     <Compile Include="MailIdentifier.cs" />
     <Compile Include="Options.cs" />
