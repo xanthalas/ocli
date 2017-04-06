@@ -22,6 +22,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.RegularExpressions;
 using Outlook = NetOffice.OutlookApi;
 using NetOffice.OutlookApi.Enums;
 using CommandLine.Text;
@@ -140,7 +141,8 @@ namespace ocli
                 // not every item in the inbox is a mail item
                 index++;
 
-                var senderName = item.Sender.Replace(" (CCS)", "").Replace(" (BEU)", "").Trim();
+                var senderName = Regex.Replace(item.Sender, @"\(.+\)", "").Trim();
+
                 senderName = (senderName.Length > 20 ? senderName.Substring(0, 20) : senderName);
                 senderName = (aliases.NameAlias.ContainsKey(senderName) ? aliases.NameAlias[senderName] : senderName);
 

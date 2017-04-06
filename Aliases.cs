@@ -37,12 +37,19 @@ namespace ocli
 
             var allAliases = query.ToList();
 
-            foreach (var line in allAliases)
+            try
             {
-                string[] columns = line.Split(':');
-                NameAlias.Add(columns[0].Trim(), columns[1].Trim());
+                foreach (var line in allAliases)
+                {
+                    string[] columns = line.Split(':');
+                    NameAlias.Add(columns[0].Trim(), columns[1].Trim());
+                }
             }
-
+            catch (System.Exception)
+            {
+                //If anything goes wrong set the alias dictionary to empty
+                NameAlias.Clear();
+            }
         }
     }
 }
