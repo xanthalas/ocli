@@ -157,10 +157,18 @@ namespace ocli
                 }
                 else
                 {
-                    ageString = "-" + age.ToString();
-                    ageString = "[" + ageString.PadLeft(3, ' ') + "]";
+                    if (age == 1)
+                    {
+                        ageString = "[yst]";
+                    }
+                    else
+                    {
+                        {
+                            ageString = "-" + age.ToString();
+                            ageString = "[" + ageString.PadLeft(3, ' ') + "]";
+                        }
+                    }
                 }
-
                 if (!options.Today || (options.Today && ageString== "[tdy]"))
                 {
                     lines.Add(new LineData(index.ToString().PadLeft(3, ' '), ageString, senderName, item.Subject));
